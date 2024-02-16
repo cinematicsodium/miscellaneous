@@ -114,3 +114,4 @@ def random_password():
 random_password()
 print('Spaces are added for readability. Please remove spaces to use the password.')
 print("Thank you for using the Random Password Generator!")
+# End of passwordGenerator.py
