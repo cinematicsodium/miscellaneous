@@ -2,28 +2,26 @@ import secrets as s
 import sys
 
 def random_password():
-    print("Welcome to the Random Password Generator!")
-
     # User Input
     # Length of the password
     attempt: int = 0
     while attempt < 5:
         try:
-            passLength: int = int(input("Enter the length of the password (range: 6-32 characters): "))
+            passLength: int = int(input("\nEnter the length of the password (range: 6-32 characters): "))
             if passLength not in range(6, 33):
                 attempt += 1
                 if attempt == 5:
-                    print("Maximum number of attempts reached. Exiting.")
+                    print("\nMaximum number of attempts reached. Exiting.")
                     sys.exit()
-                print("Invalid input. Please enter a number between 6 and 32.")
+                print("\nInvalid input. Please enter a number between 6 and 32.")
                 continue
             break
         except ValueError:
             attempt += 1
             if attempt == 5:
-                print("Maximum number of attempts reached. Exiting.")
+                print("\nMaximum number of attempts reached. Exiting.")
                 sys.exit()
-            print("Invalid input. Please enter a numeric value.")
+            print("\nInvalid input. Please enter a numeric value.")
   
     validInput: list = ['n', 'no', 'y', 'yes']
     
@@ -31,7 +29,7 @@ def random_password():
     charCheck: bool = False
     attempt: int = 0
     while attempt < 3:
-        spChar: str = input("Do you want a special character in your password? (Y/N): ").lower()
+        spChar: str = input("\nDo you want a special character in your password? (Y/N): ").lower()
         if spChar in validInput:
             if spChar in validInput[2:]:
                 charCheck = True
@@ -41,15 +39,15 @@ def random_password():
         else:
             attempt += 1
             if attempt == 3:
-                print("Maximum number of attempts reached. Exiting.")
+                print("\nMaximum number of attempts reached. Exiting.")
                 sys.exit()
-            print("Invalid input. Please enter 'Y' or 'N'.")
+            print("\nInvalid input. Please enter 'Y' or 'N'.")
 
     # Check if user wants a number in the password
     numCheck: bool = False
     attempt = 0
     while attempt < 3:
-        containsNumbers: str = input("Do you want a number in your password? (Y/N): ").lower()
+        containsNumbers: str = input("\nDo you want a number in your password? (Y/N): ").lower()
         if containsNumbers in validInput:
             if containsNumbers in validInput[2:]:
                 numCheck = True
@@ -59,31 +57,30 @@ def random_password():
         else:
             attempt += 1
             if attempt == 3:
-                print("Maximum number of attempts reached. Exiting.")
+                print("\nMaximum number of attempts reached. Exiting.")
                 sys.exit()
-            print("Invalid input. Please enter 'Y' or 'N'.")
+            print("\nInvalid input. Please enter 'Y' or 'N'.")
   
     # Check if user wants to generate multiple passwords
     attempt: int = 0
     while attempt < 3:
         try:
-            passCount: int = int(input("How many passwords do you want to generate? (range: 1-32 passwords): "))
+            passCount: int = int(input("\nHow many passwords do you want to generate? (range: 1-32 passwords): "))
             if passCount not in range(1, 33):
                 attempt += 1
                 if attempt == 3:
-                    print("Maximum number of attempts reached. Exiting.")
+                    print("\nMaximum number of attempts reached. Exiting.")
                     sys.exit()
-                print("Invalid input. Please enter a number between 1 and 32.")
+                print("\nInvalid input. Please enter a number between 1 and 32.")
                 continue
             break
         except ValueError:
             attempt += 1
             if attempt == 3:
-                print("Maximum number of attempts reached. Exiting.")
+                print("\nMaximum number of attempts reached. Exiting.")
                 sys.exit()
-            print("Invalid input. Please enter a numeric value.")
+            print("\nInvalid input. Please enter a numeric value.")
 
-  
   # Password Constraints
     consonants: list = ['b', 'd', 'f', 'g', 'j', 'k', 'm', 'n', 'p', 'r', 's', 't', 'z']
     vowels: list = ['a', 'e', 'i', 'o', 'u']
@@ -108,11 +105,7 @@ def random_password():
         
         passString = ' '.join([''.join(password[i:i+4]) for i in range(0, len(password), 4)])
 
-
         print(passString)
 
 random_password()
-print('Spaces are added for readability. Please remove spaces to use the password.')
-print("Thank you for using the Random Password Generator!")
-
-# Test comment
+print('\nSpaces are added for readability.\n')
