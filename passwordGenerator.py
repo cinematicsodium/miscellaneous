@@ -88,6 +88,7 @@ def random_password():
     numbers: list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']    
     
     # Generate Password
+    pw = 1
     for i in range(passCount):
         randChar: int = s.randbelow(passLength + 1)
         randNum: int = s.randbelow(passLength + 1)
@@ -105,7 +106,9 @@ def random_password():
         
         passString = ' '.join([''.join(password[i:i+4]) for i in range(0, len(password), 4)])
 
-        print(passString)
+        print(f'Pw_{pw}: \t{passString}')
+        pw += 1
+
+    print('\nSpaces are added for readability.\n')
 
 random_password()
-print('\nSpaces are added for readability.\n')
