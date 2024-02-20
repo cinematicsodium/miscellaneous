@@ -15,12 +15,9 @@ from base64 import b16encode, b16decode
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-from arrow import get
-from icecream import ic
 
 # Encrypting the message
-# message: str = str(input("\nEnter your secret message: \n"))
-message = "This is a secret message"
+message: str = str(input("\nEnter your secret message: \n"))
 
 data = message.encode()
 key = get_random_bytes(32)
@@ -46,6 +43,6 @@ try:
     key = b16decode(decrypted['key'])
     cipher = AES.new(key, AES.MODE_CBC, iv)
     pt = unpad(cipher.decrypt(ct), AES.block_size)
-    print("The message was: ", pt)
+    print("Decrypted message: ", pt)
 except (ValueError, KeyError):
     print("Incorrect decryption")
