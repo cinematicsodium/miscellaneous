@@ -104,7 +104,8 @@ def random_password():
         if numCheck: 
             password.insert(randNum, s.choice(numbers))
         
-        passString = ' '.join([''.join(password[i:i+4]) for i in range(0, len(password), 4)])
+        #passString = ' '.join([''.join(password[i:i+4]) for i in range(0, len(password), 4)])
+        passString = ''.join(str(i) for i in password)
 
         print(f'Pw_{pw}: \t{passString}')
         pw += 1
