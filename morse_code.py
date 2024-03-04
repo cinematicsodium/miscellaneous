@@ -14,8 +14,9 @@ def morse_to_alpha(morse: str):
                     invalidList.append(char)
             if len(invalidList) > 0:
                 invalidSetList = ', '.join(sorted(list(set(invalidList))))
-                sleep(0.6)
+                sleep(1)
                 print(f'\nInvalid character(s): \n{invalidSetList} \n\nMorse code only consists of dots (.) and dashes (-). \n"Letters" must be separated with a single space. \n"Words" must be separated with three spaces.\n')
+                print('Example: \n.... . .-.. .-.. --- --..--    -- --- - --- .-.-.-')
                 sleep(3)
                 break
             decoded_message = ''
@@ -26,11 +27,10 @@ def morse_to_alpha(morse: str):
                         continue
                     decoded_message += morseDict[char]
                 decoded_message += ' '
-            sleep(0.6)
-            print('\nDecoded Morse code message:\t', decoded_message)
-            sleep(5)
+            sleep(1)
+            print('\nDecoded Morse code message:\n\t', decoded_message)
         except Exception:
-            sleep(0.6)
+            sleep(1)
             print('\nError. Please try again.')
         else:
             break
@@ -59,53 +59,49 @@ def alpha_to_morse(alpha: str):
                     encoded_message += char
                 encoded_message += '   '
             encoded_message = encoded_message.strip()
-            sleep(0.6)
-            print('\nMessage encoded to Morse code:\t', encoded_message)
+            sleep(1)
+            print('\nMessage encoded to Morse code:\n\t', encoded_message)
             sleep(5)
         except Exception:
-            sleep(0.6)
+            sleep(1)
             print('\nError. Please try again.')
         else:
             break
 
 while True:
     try:
-        sleep(0.5)
+        sleep(1)
         print("\n\nEnter 'T' to convert text into to Morse code.")
-        sleep(0.6)
         print("Enter 'M' to convert Morse code into text.")
-        sleep(0.6)
         print("Enter 'Q' to quit.")
-        sleep(0.6)
-        selection: str = input('Enter selection: ').strip().lower()
+        sleep(3)
+        selection: str = input('\nEnter selection: ').strip().lower()
         options: list = ['t','m', 'q']
         if selection not in options:
-            sleep(0.6)
+            sleep(1)
             print('\nInvalid selection. Please try again.')
-            sleep(3)
             continue
         elif selection == 't':
-            sleep(0.6)
+            sleep(1)
             print('\n\nEnter text to convert to Morse code:')
             text = input('Text: ').strip()
             alpha_to_morse(text)
             continue
         elif selection == 'm':
-            sleep(0.6)
+            sleep(1)
             print('\n\nEnter Morse code to convert to text:')
-            sleep(0.6)
+            sleep(1)
             morse = input('Morse code: ').strip()
-            sleep(0.6)
             morse_to_alpha(morse)
             continue
         elif selection == 'q':
-            sleep(0.6)
+            sleep(1)
             print('\n\nGoodbye!\n\n')
-            sleep(0.6)
             exit()
         else:
             continue
     except Exception:
+        sleep(1)
         print('\nError. Please try again.')
     else:
         break
