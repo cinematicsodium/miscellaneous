@@ -70,13 +70,10 @@ def alpha_to_morse(alpha: str):
 
 while True:
     try:
-        sleep(0.5)
+        sleep(1)
         print("\n\nEnter 'T' to convert text into to Morse code.")
-        sleep(0.6)
         print("Enter 'M' to convert Morse code into text.")
-        sleep(0.6)
         print("Enter 'Q' to quit.")
-        sleep(0.6)
         selection: str = input('Enter selection: ').strip().lower()
         options: list = ['t','m', 'q']
         if selection not in options:
