@@ -1,27 +1,26 @@
-'''
-AES-256 encryption and decryption.
--------------------------------------------
-AES (Advanced Encryption Standard) is an encoding algorithm that transforms 
-plain text data into a version known as ciphertext that’s not possible for 
-humans or machines to understand without an encryption key―a password.
+# AES-256 encryption and decryption.
+# ------------------------------------------------------------------------------
+# AES (Advanced Encryption Standard) is an encoding algorithm that transforms 
+# plain text data into a version known as ciphertext that’s not possible for 
+# humans or machines to understand without an encryption key―a password.
 
-For example, you use AES in software development to securely store passwords 
-in a database. Storing a password as plain text would allow anyone with access 
-to the database to log in to user accounts, so encrypting them is the first 
-step to adding a layer of security to your authentication system.
+# For example, you use AES in software development to securely store passwords 
+# in a database. Storing a password as plain text would allow anyone with access 
+# to the database to log in to user accounts, so encrypting them is the first 
+# step to adding a layer of security to your authentication system.
 
-AES requires a secret passphrase known as a “key” to encrypt/decrypt data. 
-Anybody with the key can decrypt your data, so you need it to be strong and 
-hidden from everyone―only the software program should be able to access it.
+# AES requires a secret passphrase known as a “key” to encrypt/decrypt data. 
+# Anybody with the key can decrypt your data, so you need it to be strong and 
+# hidden from everyone―only the software program should be able to access it.
 
-The key can be either 128, 192, 256, or 512 bit long. An AES cipher using a 
-512-bit key is abbreviated as AES 512, for example. The longer the key, the 
-more secure it is, but the slower the encryption/decryption will be as well. 
-128 bits is equivalent to 32 characters in base64 encoding, 64 characters 
-for 256 bits. Since storage space isn't usually a problem and the difference 
-in speed between the versions is negligible, a good rule of thumb is to use 
-256-bit keys.
-'''
+# The key can be either 128, 192, 256, or 512 bit long. An AES cipher using a 
+# 512-bit key is abbreviated as AES 512, for example. The longer the key, the 
+# more secure it is, but the slower the encryption/decryption will be as well. 
+# 128 bits is equivalent to 32 characters in base64 encoding, 64 characters 
+# for 256 bits. Since storage space isn't usually a problem and the difference 
+# in speed between the versions is negligible, a good rule of thumb is to use 
+# 256-bit keys.
+# ------------------------------------------------------------------------------
 
 import json
 from base64 import b16encode, b16decode
