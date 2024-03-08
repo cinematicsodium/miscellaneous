@@ -10,7 +10,6 @@
 # a basic and easily breakable encryption method, but it serves as a foundation 
 # for more complex algorithms.
 
-
 def caesar_cipher(message: str, shift: int) -> None:
     from string import ascii_lowercase, ascii_uppercase
     from unicodedata import normalize
@@ -29,19 +28,31 @@ def caesar_cipher(message: str, shift: int) -> None:
             encoded_message += uppercase[(uppercase.index(char) + shift) % 26]
         elif char in lowercase:
             encoded_message += lowercase[(lowercase.index(char) + shift) % 26]
+        elif char.isdigit():
+            encoded_message += str((int(char) + shift) % 10)
         else:
             encoded_message += char
 
     print('\nEncrypted message:')
     print(encoded_message)
 
-
 while True:
     try:
-        message: str = input('\nEnter message to encrypt: ').strip()
-        shift: int = int(input('\nEnter shift number: ').strip())
-        caesar_cipher(message, shift)
-        continue
+        print('\nCaesar cipher.')
+        print('\nExample: ')
+        print('\n\tOriginal: \tTesting, testing, 1, 2, 3.')
+        print('\tShift number: \t5')
+        print('\n\tEncrypted: \tYjxynsl, yjxynsl, 6, 7, 8.')
+        while True:
+            try:
+                message: str = input('\nEnter message to encrypt: ').strip()
+                shift: int = int(input('\nEnter shift number: ').strip())
+                caesar_cipher(message, shift)
+                continue
+            except Exception:
+                print('\nError. Please try again.')
+            else:
+                break
     except Exception:
         print('\nError. Please try again.')
     else:
