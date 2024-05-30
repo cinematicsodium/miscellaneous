@@ -1,5 +1,15 @@
-from underline_print import underline_print
-
+def underline_print(text):
+    text = str(text)
+    n = len(text)
+    print()
+    if "C:" in text:
+        print("".ljust(125, "-"))
+        print(text)
+        print()
+        return
+    print(text)
+    print("".ljust(n, "-"))
+    print()
 
 def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
     from dataclasses import dataclass
