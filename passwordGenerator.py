@@ -22,7 +22,7 @@ def random_password():
                 print("\nMaximum number of attempts reached. Exiting.")
                 sys.exit()
             print("\nInvalid input. Please enter a numeric value.")
-  
+
     validInput: list = ['n', 'no', 'y', 'yes']
     
     # Check if user wants a special character in the password
@@ -104,8 +104,8 @@ def random_password():
         if numCheck: 
             password.insert(randNum, s.choice(numbers))
         
-        #passString = ' '.join([''.join(password[i:i+4]) for i in range(0, len(password), 4)])
-        passString = ''.join(str(i) for i in password)
+        passString = ' '.join([''.join(password[i:i+4]) for i in range(0, len(password), 4)])
+        # passString = ''.join(str(i) for i in password)
 
         print(f'Pw_{pw}: \t{passString}')
         pw += 1

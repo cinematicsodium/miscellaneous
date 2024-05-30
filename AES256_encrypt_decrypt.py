@@ -29,7 +29,7 @@ from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 
 # Encrypting the message
-message: str = str(input("\nEnter your secret message: \n"))
+message: str = str(input("\nEnter your secret message:\t"))
 
 data = message.encode()
 key = get_random_bytes(32)
