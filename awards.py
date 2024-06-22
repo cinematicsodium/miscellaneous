@@ -14,7 +14,6 @@ def underline_print(text):
 def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
     from dataclasses import dataclass
     from datetime import datetime
-    from pprint import pprint
     import fitz
     import os
     
@@ -35,6 +34,16 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
         date_time = datetime.strptime(date_part + time_part,'%Y%m%d%H%M%S')
         meta_date = date_time.strftime('%Y-%m-%d')
         return meta_date
+
+    def rename_file(source, dest):
+        try:
+            directory, filename = os.path.split(source)
+            new_path = os.path.join(directory, dest)
+            os.rename(source, new_path)
+        except FileNotFoundError:
+            print("File not found.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
     def rename_file(source, dest):
         try:
@@ -87,6 +96,25 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
         elif isinstance(text,str):
             print(text)
         print("\n")
+
+    def add_date_received(Pathlib: object) -> None:
+        nonlocal today
+        with fitz.open(Pathlib) as doc:
+            for page in doc:
+                date_xref = None
+                fields = page.widgets()
+                for field in fields:
+                    key = field.field_name
+                    key = key.strip().lower()
+                    if key == "date received":
+                        date_xref = field.xref
+                        break
+                if date_xref is not None:
+                    date_field = page.load_widget(date_xref)
+                    date_field.field_value = today
+                    date_field.update()
+                    doc.saveIncr()
+                    return
 
     def add_date_received(Pathlib: object) -> None:
         nonlocal today
@@ -174,7 +202,8 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
             office=org[0]
             for div in org:
                 for form_field_org in form_field_org_list:
-                    if div in form_field_org.upper():return office
+                    if div in form_field_org.upper():
+                        return office
         return form_field_org_list
 
     def name_format(name: str) -> str:
@@ -364,13 +393,11 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
                     for page in doc:
                         fields = page.widgets()
                         for field in fields:
-                            key = field.field_name
-                            key = key.strip().lower()
-                            val = field.field_value
-                            val = val.strip()
+                            key = field.field_name.strip().lower()
+                            val = field.field_value.strip()
                             if val is None or key is None or val.isspace() or val == "":
                                 continue
-                            kv = [key,val]
+                            kv = [key, val]
 
                             if page.number == 0:
                                 if award.type is None:
@@ -388,69 +415,53 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
                                     award_fields.append(kv)
 
                             elif page != 0:
-                                if (
-                                    award.justification is None 
-                                    and key in just_list):
-                                    just: str = (
+                                if award.justification is None and key in just_list:
+                                    just = (
                                         val.strip()
-                                        .replace("  "," ")
-                                        .replace("\r","    ")
-                                        .replace("\n","    ")
-                                        .replace("\t","    ")
+                                        .replace("  ", " ")
+                                        .replace("\r", "    ")
+                                        .replace("\n", "    ")
+                                        .replace("\t", "    ")
                                         .encode("utf-8")
-                                        .decode("ascii",errors="ignore")
+                                        .decode("ascii", errors="ignore")
                                     )
                                     award.justification = just
-                                    award.justCount = (
-                                        str(len(just.strip().split())) + " words"
-                                    )
-                                    award_fields.append([key,award.justCount])
-                                elif (
-                                    award.value is None
-                                    and key in val_list
-                                    and val.lower() == "on"
-                                ):
+                                    award.justCount = str(len(just.strip().split())) + " words"
+                                    award_fields.append([key, award.justCount])
+                                elif award.value is None and key in val_list and val.lower() == "on":
                                     award.value = val_list.index(key)
                                     award.value_str = key.capitalize()
-                                elif (
-                                    award.extent is None
-                                    and key in ext_list
-                                    and val.lower() == "on"
-                                ):
+                                elif award.extent is None and key in ext_list and val.lower() == "on":
                                     award.extent = ext_list.index(key)
                                     award.extent_str = key.capitalize()
                                 elif page.number == final_pg and "employee name" in key:
                                     continue
-
-                                elif page_count == 21 and nominee == nominees[13]:
-                                    if page.number == 2:
-                                        if key == nom_name:
-                                            award.nominee = name_format(val)
-                                            award_fields.append(kv)
-                                        elif key == nom_money:
-                                            val = amt_format(val)
-                                            award.money = val
-                                            award_fields.append(kv)
-                                        elif key == nom_time:
-                                            val = amt_format(val)
-                                            award.time = val
-                                            award_fields.append(kv)
+                                elif page_count == 21 and nominee == nominees[13] and page.number == 2:
+                                    if key == nom_name:
+                                        award.nominee = name_format(val)
+                                        award_fields.append(kv)
+                                    elif key == nom_money:
+                                        val = amt_format(val)
+                                        award.money = val
+                                        award_fields.append(kv)
+                                    elif key == nom_time:
+                                        val = amt_format(val)
+                                        award.time = val
+                                        award_fields.append(kv)
                                     continue
-                                elif page_count == 21 and nominee == nominees[14]:
-                                    if page.number == 3:
-                                        if key == nom_name:
-                                            award.nominee = name_format(val)
-                                            award_fields.append(kv)
-                                        elif key == nom_money:
-                                            val = amt_format(val)
-                                            award.money = val
-                                            award_fields.append(kv)
-                                        elif key == nom_time:
-                                            val = amt_format(val)
-                                            award.time = val
-                                            award_fields.append(kv)
+                                elif page_count == 21 and nominee == nominees[14] and page.number == 3:
+                                    if key == nom_name:
+                                        award.nominee = name_format(val)
+                                        award_fields.append(kv)
+                                    elif key == nom_money:
+                                        val = amt_format(val)
+                                        award.money = val
+                                        award_fields.append(kv)
+                                    elif key == nom_time:
+                                        val = amt_format(val)
+                                        award.time = val
+                                        award_fields.append(kv)
                                     continue
-
                                 elif key == nom_name:
                                     val = name_format(val)
                                     award.nominee = val
@@ -544,9 +555,9 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
                         underline_print("Award Value(s) Exceed Max Amount Allowable")
                         print("AwardValue:".ljust(16),award.value_str.capitalize())
                         print("AwardExtent:".ljust(16),award.extent_str.capitalize(),
-                              x,x)
+                            x,x)
                         print("Nominee:".ljust(16),award.nominee.title(),
-                              x)
+                            x)
                         print(
                             "Monetary:".ljust(16),str("$" + str(award.money)).ljust(12),
                             "Max Allowed: ",str("$" + str(max_money)).ljust(12),
@@ -571,7 +582,7 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
                 underline_print("Verify Number of Nominees")
                 print("Number of Nominees Detected:".ljust(32),len(count_nominee_fields))
                 print("Number of Nominees Found:".ljust(32),len(processed_nominees),
-                      x)
+                    x)
                 print(count_nominee_fields)
                 underline_print("Award Fields:")
                 sort_print_list(award_fields)
@@ -756,9 +767,9 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
                     underline_print("Award Value(s) Exceed Max Amount Allowable")
                     print("AwardValue:".ljust(16),value_str.capitalize())
                     print("AwardExtent:".ljust(16),extent_str.capitalize(),
-                          x)
+                        x)
                     print("Nominee:".ljust(16),award_nominee.title(),
-                          x)
+                        x)
 
                     print(
                         "Monetary:".ljust(16),str("$" + str(award_money)).ljust(12),
@@ -787,7 +798,7 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
                 print()
                 return False
 
-            award_repr = f"{award_id}\t{award_date}\t\t{award_nominee}\t{award_category}\t{award_type}\t{award_money}\t{award_time}\t{award_nominator}\t{award_org}\t\t{award_just}\n"
+            # award_repr = f"{award_id}\t{award_date}\t\t{award_nominee}\t{award_category}\t{award_type}\t{award_money}\t{award_time}\t{award_nominator}\t{award_org}\t\t{award_just}\n"
             # with open("output.txt","a") as f:
             #     f.write(award_repr)
 
@@ -811,17 +822,17 @@ def award(Pathlib: object,serial_ind: int,serial_grp: int) -> bool:
             return True
 
     category = classify_award()
-    if category == False:
+    if category is not True:
         return False
 
     elif category == "IND":
-        if indAward(Pathlib,serial_ind) == True:
+        if indAward(Pathlib,serial_ind) is True:
             # add_date_received(Pathlib)
             return "IND"
 
     elif category == "GRP":
         page_count: int = grp_doc_pg_count(Pathlib)
-        if grpAward(Pathlib,page_count,serial_grp) == True:
+        if grpAward(Pathlib,page_count,serial_grp) is True:
             # add_date_received(Pathlib)
             return "GRP"
 
