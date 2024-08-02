@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from pprint import pprint
 from pathlib import Path
