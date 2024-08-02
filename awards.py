@@ -1,4 +1,7 @@
+
+
 from datetime import datetime
+from pprint import pprint
 from pathlib import Path
 import shutil
 import fitz
@@ -7,28 +10,26 @@ import os
 
 # ==================
 TESTING: bool = False
-# ==================
-PROCESSING_FOLDER: str = (
-    r""
-)
-FY24_FOLDER: str = (
-    r""
-)
-# PROCESSING_FOLDER: str = r'X:\03 - Benefits & Work Life Balance\TEAM A\AWARDS\SPECIAL ACT OR SERVICE AWARDS\FY 2024\Submitted Nomination Forms - SASA'
-TEST_FOLDER: str = (
-    r""
-)
-AWARD_SER_NUMS: str = (
-    r""
-)
 UPDATE_AWARD_SER_NUMS: bool = True
 PRINT_AWARD_DATA: bool = True
 CREATE_XLS_ROWS: bool = True
 INSERT_DATE: bool = True
 RENAME_AND_MOVE: bool = True
-MIN_PAGE_COUNT: int = 2
-MAX_PAGE_COUNT: int = 5
-FIRST_PAGE: int = 0
+# ==================
+PROCESSING_FOLDER: str = (
+    r"C:\Users\Processing Folder"
+)
+FY24_FOLDER: str = (
+    r"C:\Users\FY24 Folder"
+)
+TEST_FOLDER: str = (
+    r"C:\Users\Test Folder"
+)
+AWARD_SER_NUMS: str = (
+    r"C:\Users\Serial Numbers"
+)
+
+
 # ----------------------------------------------------------------------------------------------------
 # SHARED AWARD TOOLS
 # ----------------------------------------------------------------------------------------------------
@@ -37,7 +38,9 @@ FIRST_PAGE: int = 0
 def get_file_name(filePath: str) -> str:
     return os.path.basename(filePath)
 
-
+MIN_PAGE_COUNT: int = 2
+MAX_PAGE_COUNT: int = 5
+FIRST_PAGE: int = 0
 def get_pdf_fields(pdf_file: str) -> dict:
     with fitz.open(pdf_file) as doc:
         page_count: int = doc.page_count
@@ -47,6 +50,7 @@ def get_pdf_fields(pdf_file: str) -> dict:
             "mid_pages": {},
             "last_page": {},
             "page_count": page_count,
+            "file_name": os.path.basename(pdf_file)
         }
         if not (MIN_PAGE_COUNT <= page_count <= MAX_PAGE_COUNT):
             raise Exception(
@@ -148,15 +152,89 @@ def get_nominator_name(first_page_fields: dict[str, str | int]) -> str:
             return xname(field_text)
     return ""
 
+
+def get_funding_org(
+    first_page_fields: dict[str, str | int], grp=False, ind=False
+) -> str:
+
+    def collect_list_of_divs(first_page_fields: dict) -> list | None:
+        divisions_fields: list = []
+        for field_name, field_text in first_page_fields.items():
+            if field_name in ["org_2", "organization_3", "org_4"] and grp is True:
+                divisions_fields.append(str(field_text).upper())
+            elif (
+                field_name
+                in ["org_6", "org_4", "org", "organization_2", "organization_5"]
+                and ind is True
+            ):
+                divisions_fields.append(str(field_text).upper())
+        return divisions_fields if divisions_fields else None
+
+    def define_funding_org(divisions_fields: list) -> str | list | None:
+        if None == divisions_fields:
+            return None
+        org_ZJR: list[str] = ['div_EPB', 'div_OAQ', 'div_LCK', 'div_SKG', 'div_PAK', 'div_HCV', 'div_JDU', 'div_HUA', 'div_KNA', 'div_ISV']
+        org_QTB: list[str] = ['div_MOS', 'div_HGD', 'div_FMB', 'div_LIY', 'div_OMO', 'div_QKQ', 'div_QEK', 'div_ISR', 'div_VTB', 'div_BIP']
+        org_OKJ: list[str] = ['div_MOT', 'div_IWR', 'div_KXL', 'div_MAI', 'div_SUJ', 'div_ZKA', 'div_UPK', 'div_ZVI', 'div_OVW', 'div_MBQ']
+        org_FTD: list[str] = ['div_RCW', 'div_LYQ', 'div_TVE', 'div_DTS', 'div_PMI', 'div_ZRK', 'div_KKY', 'div_XJB', 'div_IFM', 'div_JXM']
+        org_UJY: list[str] = ['div_KTP', 'div_ZHN', 'div_CBC', 'div_ELV', 'div_BRL', 'div_HCJ', 'div_VWX', 'div_FRH', 'div_RGM', 'div_QBH']
+        org_TWT: list[str] = ['div_RCI', 'div_FND', 'div_DGP', 'div_RED', 'div_KRF', 'div_STZ', 'div_QJB', 'div_DKA', 'div_GRM', 'div_EGS']
+        org_ACO: list[str] = ['div_VEL', 'div_HGX', 'div_HVY', 'div_EWZ', 'div_OBO', 'div_GQQ', 'div_EDI', 'div_TUO', 'div_PCM', 'div_YRF']
+        org_DFB: list[str] = ['div_ABD', 'div_YVX', 'div_ZLT', 'div_TUA', 'div_PBM', 'div_MKR', 'div_QAF', 'div_RIU', 'div_JNH', 'div_UAD']
+        org_LQA: list[str] = ['div_OZB', 'div_IAB', 'div_ZCA', 'div_LVN', 'div_UMB', 'div_VJR', 'div_AHF', 'div_PFG', 'div_IDL', 'div_UWZ']
+        org_IXN: list[str] = ['div_CVY', 'div_JZQ', 'div_TFL', 'div_EIT', 'div_OED', 'div_LPK', 'div_JDR', 'div_FCL', 'div_WFQ', 'div_AKC']
+        org_RCC: list[str] = ['div_NIW', 'div_FLA', 'div_UBL', 'div_UCR', 'div_MDF', 'div_XSF', 'div_JIQ', 'div_HQO', 'div_AZA', 'div_QZA']
+        org_IPZ: list[str] = ['div_MGI', 'div_VZS', 'div_WBF', 'div_PEH', 'div_WZI', 'div_GEY', 'div_SNE', 'div_PPB', 'div_LKB', 'div_EXF']
+        org_QAK: list[str] = ['div_RDK', 'div_SDN', 'div_BKC', 'div_AYF', 'div_YPG', 'div_NQR', 'div_QEK', 'div_FHD', 'div_CJR', 'div_SYQ']
+        org_RHL: list[str] = ['div_YKW', 'div_PBX', 'div_AUE', 'div_WFP', 'div_TVG', 'div_JWR', 'div_MXQ', 'div_WSD', 'div_XAJ', 'div_WAK']
+        org_LIY: list[str] = ['div_KJB', 'div_UID', 'div_LTB', 'div_HWN', 'div_KGN', 'div_TDI', 'div_FUK', 'div_PRN', 'div_GSZ', 'div_HQD']
+        org_EGW: list[str] = ['div_SEY', 'div_LAO', 'div_BHN', 'div_LWL', 'div_NCC', 'div_GOU', 'div_HLT', 'div_HAD', 'div_HDE', 'div_ZJX']
+        org_ZKB: list[str] = ['div_SYH', 'div_HST', 'div_FEO', 'div_PTR', 'div_QKV', 'div_SMY', 'div_IDU', 'div_QZB', 'div_BEM', 'div_QDG']
+        org_WZJ: list[str] = ['div_EMS', 'div_WHU', 'div_HBH', 'div_PXD', 'div_IEG', 'div_ZCL', 'div_KXD', 'div_OUQ', 'div_UPI', 'div_JNI']
+        org_ROY: list[str] = ['div_SSW', 'div_BVW', 'div_IUN', 'div_UBM', 'div_WCK', 'div_ZXJ', 'div_QMO', 'div_FEX', 'div_ROD', 'div_STZ']
+        org_RCK: list[str] = ['div_UVD', 'div_IJN', 'div_LLN', 'div_EIG', 'div_XQB', 'div_GQW', 'div_SBN', 'div_TEY', 'div_KMM', 'div_NPG']
+        orgs: list[str] = [org_ZJR, org_QTB, org_OKJ, org_FTD, org_UJY, org_TWT, org_ACO, org_DFB, org_LQA, org_IXN, org_RCC, org_IPZ, org_QAK, org_RHL, org_LIY, org_EGW, org_ZKB, org_WZJ, org_ROY, org_RCK]
+
+        for div_field in divisions_fields:
+            for org in orgs:
+                main_div: str = org[0]
+                for div in org:
+                    if div.lower() in div_field.lower() or div.lower() == div_field.lower():
+                        if main_div == "NA-MB":
+                            return div
+                        return main_div
+
+    divisions_fields: list = collect_list_of_divs(first_page_fields)
+    funding_org: str = define_funding_org(divisions_fields)
+    if funding_org:
+        return funding_org
+    elif divisions_fields:
+        print("Unable to Determine Funding Org.\n")
+        print(f"Divisions Found: {', '.join(divisions_fields)}\n")
+        manual_org_selection: str = input("Enter Selection:\n>>> NA-").strip().upper()
+        print()
+        if manual_org_selection == "":
+            return None
+        elif manual_org_selection in ["na", "nx"]:
+            pass
+        else:
+            manual_org_selection = "NA-" + manual_org_selection
+        return manual_org_selection
+
+
 def get_type(first_page_fields: dict[str, str | int], grp=False, ind=False) -> str:
-    award_type: str = "SAS"
-    for field_name in first_page_fields.keys():
-        if grp and field_name in ["on the spot award", "hours"]:
-            award_type = "OTS"
-            break
-        elif ind and "the spot" in field_name or "hours" in field_name:
-            award_type = "OTS"
-    return award_type
+    if ind is True:
+        sas_fields: list[str] = ['hours_2','time off award','special act or service','undefined',]
+        for field_name in first_page_fields.keys():
+            if field_name in sas_fields:
+                return "SAS"
+        return "OTS"
+    elif grp is True:
+        ots_fields: list[str] = ['on the spot','hours',]
+        for field_name in first_page_fields.keys():
+            if field_name in ots_fields:
+                return "OTS"
+        return "SAS"
 
 
 def get_justification(last_page: dict[str, str]) -> str:
@@ -166,37 +244,50 @@ def get_justification(last_page: dict[str, str]) -> str:
 
 
 VALUE_CHOICES: list = ["moderate", "high", "exceptional"]
-ENTENT_CHOICES: list = ["limited", "extended", "general"]
-
+EXTENT_CHOICES: list = ["limited", "extended", "general"]
 
 def get_value_and_extent(last_page: dict[str, str]) -> dict:
-    value_and_extent: dict = {}
-    for field_name, field_text in last_page.items():
+    """
+    Extracts value and extent information from the last page.
+
+    Args:
+    last_page (dict[str, str]): A dictionary containing the last page data.
+
+    Returns:
+    dict: A dictionary containing the extracted value and extent information.
+    """
+    value_extent_dict: dict = {}
+    items = list(last_page.items())
+
+    # Check if value or extent is directly present in the last page
+    for field_name, field_text in items:
         if field_name in VALUE_CHOICES:
-            value_and_extent["Value"] = {
-                "Text": str(field_name).capitalize(),
+            value_extent_dict["Value"] = {
+                "Text": field_name.capitalize(),
                 "Index": VALUE_CHOICES.index(field_name),
             }
-        elif field_name in ENTENT_CHOICES:
-            value_and_extent["Extent"] = {
-                "Text": str(field_name).capitalize(),
-                "Index": ENTENT_CHOICES.index(field_name),
+        elif field_name in EXTENT_CHOICES:
+            value_extent_dict["Extent"] = {
+                "Text": field_name.capitalize(),
+                "Index": EXTENT_CHOICES.index(field_name),
             }
-    if not value_and_extent:
-        for field_name, field_text in last_page.items():
+
+    # If not found, search in the text
+    if not value_extent_dict:
+        for field_name, field_text in items:
             if "extent" in field_name:
-                awardJustificationText: list = field_text.split(" ")
-                for i in range(0, len(awardJustificationText), 8):
+                award_justification_text: list = field_text.split(" ")
+                for i in range(0, len(award_justification_text), 8):
                     n = 0 if i < 36 else i - 36
-                    sentence: str = " ".join(i for i in awardJustificationText[n:i])
+                    sentence: str = " ".join(award_justification_text[n:i])
                     val_ext_detected: list = [
                         [v, e]
                         for v in VALUE_CHOICES
-                        for e in ENTENT_CHOICES
+                        for e in EXTENT_CHOICES
                         if v in sentence and e in sentence
                     ]
                     if val_ext_detected:
-                        val_ext_found: list[str] = val_ext_detected[0]
+                        val_ext_found: list[str] = val_ext_detected
                         for text in val_ext_found:
                             sentence = sentence.replace(
                                 text, "<--" + text.upper() + "-->"
@@ -209,100 +300,84 @@ def get_value_and_extent(last_page: dict[str, str]) -> dict:
                         if sentence_verification == "":
                             return None
                         elif sentence_verification == str(1):
-                            value_and_extent["Value"] = {
-                                "Text": str(val_ext_found[0]).capitalize(),
-                                "Index": VALUE_CHOICES.index(val_ext_found[0]),
+                            value_extent_dict["Value"] = {
+                                "Text": val_ext_found.capitalize(),
+                                "Index": VALUE_CHOICES.index(val_ext_found),
                             }
-                            value_and_extent["Extent"] = {
-                                "Text": str(val_ext_found[1]).capitalize(),
-                                "Index": ENTENT_CHOICES.index(val_ext_found[1]),
+                            value_extent_dict["Extent"] = {
+                                "Text": val_ext_found.capitalize(),
+                                "Index": EXTENT_CHOICES.index(val_ext_found),
                             }
-                            return value_and_extent
-    return value_and_extent
+                            return value_extent_dict
+    return value_extent_dict
 
 
-MONEY_MATRIX = [
+from typing import List, Dict, Union
+
+MONETARY_LIMITS = [
     [500, 1000, 3000],  # moderate
     [1000, 3000, 6000],  # high
     [3000, 6000, 10000],  # exceptional
 ]  # limited    extended    general
-TIME_MATRIX = [
+
+TIME_LIMITS = [
     [9, 18, 27],  # moderate
     [18, 27, 36],  # high
     [27, 36, 40],  # exceptional
 ]  # limited    extended    general
 
-
 def validate_award_amounts(
-    name_award_amts: list[dict],
-    value_extent: dict[dict[str, str | int]],
-    grp=False,
-    ind=False,
+    nominees: list[dict],
+    val_and_ext_vals: dict,
+    is_group: bool = False,
+    is_individual: bool = False
 ) -> None:
-    value_idx: int = value_extent["Value"]["Index"]
-    extent_idx: int = value_extent["Extent"]["Index"]
-    max_monetary: int = MONEY_MATRIX[value_idx][extent_idx]
-    max_hours: int = TIME_MATRIX[value_idx][extent_idx]
-    if grp is True:
-        invalid_awards: list = []
-        for nominee_fields in name_award_amts:
-            name: str = nominee_fields["Name"]
-            money_award: int = nominee_fields["Monetary"]
-            time_award: int = nominee_fields["Hours"]
-            money_percent: int = money_award / max_monetary
-            time_percent: int = time_award / max_hours
-            combined_percent = money_percent + time_percent
-            within_limits: bool = combined_percent <= 100
-            if not within_limits:
-                a: str = f"Nominee:  {name}"
-                b: str = f"Monetary: ${money_award}        (Max: ${max_monetary})"
-                c: str = f"Time:     {time_award} hours    (Max: {max_hours} hours)"
-                d: str = f"Combined: {combined_percent}%   (Max: 100%)"
-                errNominee: str = "\n".join([a, b, c, d])
-                invalid_awards.append(errNominee)
-        if invalid_awards:
-            a: str = "Error:"
-            b: str = (
-                "Award amounts exceed the maximum allowed based on the selected award value and extent."
-            )
-            c: str = f"Value:  {value_extent['Value']['Text']}"
-            d: str = f"Extent: {value_extent['Extent']['Text']}"
-            e: str = "Nominees:"
-            f: str = "\n\n\t".join(invalid_awards)
-            errGrp: str = (
-                "\n".join(
-                    [
-                        a,
-                        b,
-                        c,
-                        d,
-                        e,
-                    ]
-                )
-                + "\n"
-            )
-            raise Exception(errGrp)
-    elif ind is True:
-        ind_name: str = name_award_amts["Name"]
-        money_award: int = name_award_amts["Monetary"]
-        time_award: int = name_award_amts["Hours"]
-        money_percent: int = money_award / max_monetary
-        time_percent: int = time_award / max_hours
-        combined_percent = money_percent + time_percent
-        within_limits: bool = combined_percent <= 1
-        if not within_limits:
-            a: str = f"Error:"
-            b: str = (
-                f"Award amounts exceed the maximum allowed based on the selected award value and extent."
-            )
-            c: str = f"Value:    {value_extent['Value']['Text']}"
-            d: str = f"Extent:   {value_extent['Extent']['Text']}"
-            e: str = f"Nominee:  {ind_name}"
-            f: str = f"Monetary: ${money_award}  (Max: ${max_monetary})"
-            g: str = f"Time: {time_award} hours  (Max: {max_hours} hours)"
-            errInd: str = "\n".join([a, b, e, c, d, f, g]) + "\n"
-            raise Exception(errInd)
+    value_index: int = val_and_ext_vals["Value"]["Index"]
+    extent_index: int = val_and_ext_vals["Extent"]["Index"]
+    max_monetary: int = MONETARY_LIMITS[value_index][extent_index]
+    max_hours: int = TIME_LIMITS[value_index][extent_index]
 
+    def check_award_limits(name: str, monetary_award: int, time_award: int) -> Union[str, None]:
+        monetary_percentage: float = monetary_award / max_monetary
+        time_percentage: float = time_award / max_hours
+        total_percentage = monetary_percentage + time_percentage
+        if total_percentage > 1:
+            return (
+                f"Nominee:  {name}\n"
+                f"Monetary: ${monetary_award} (Max: ${max_monetary})\n"
+                f"Time:     {time_award} hours (Max: {max_hours} hours)\n"
+                f"Combined: {total_percentage:.2%} (Max: 100%)"
+            )
+        return None
+
+    if is_group:
+        invalid_nominations: List[str] = []
+        for nominee in nominees:
+            result = check_award_limits(nominee["Name"], nominee["Monetary"], nominee["Hours"])
+            if result:
+                invalid_nominations.append(result)
+        
+        if invalid_nominations:
+            error_message = (
+                f"Error:\n"
+                f"Award amounts exceed the maximum allowed based on the selected award value and extent.\n"
+                f"Value:  {val_and_ext_vals['Value']['Text']}\n"
+                f"Extent: {val_and_ext_vals['Extent']['Text']}\n"
+                f"Nominees:\n\n\t" + "\n\n\t".join(invalid_nominations)
+            )
+            raise ValueError(error_message)
+
+    elif is_individual:
+        result = check_award_limits(nominees["Name"], nominees["Monetary"], nominees["Hours"])
+        if result:
+            error_message = (
+                f"Error:\n"
+                f"Award amounts exceed the maximum allowed based on the selected award value and extent.\n"
+                f"Value:    {val_and_ext_vals['Value']['Text']}\n"
+                f"Extent:   {val_and_ext_vals['Extent']['Text']}\n"
+                f"{result}"
+            )
+            raise ValueError(error_message)
 
 def get_shared_ind_grp_data(pdf_fields: dict[str, int | dict[str, str]]) -> dict:
     first_page_fields: dict = pdf_fields["first_page"]
@@ -313,7 +388,7 @@ def get_shared_ind_grp_data(pdf_fields: dict[str, int | dict[str, str]]) -> dict
             if pdf_fields["category"] == "GRP"
             else get_funding_org(first_page_fields, ind=True)
         ),
-        "Nominator"
+        "Nominator": get_nominator_name(first_page_fields),
         "Justification": get_justification(last_page_fields),
         "Type": (
             get_type(first_page_fields, grp=True)
@@ -332,7 +407,7 @@ def get_shared_ind_grp_data(pdf_fields: dict[str, int | dict[str, str]]) -> dict
     return shared_data
 
 
-XLS_TO_TXT = r""
+XLS_TO_TXT = r"C:\Users\joseph.strong\OneDrive - US Department of Energy\Python\process_award_data\spreadsheet_rows.txt"
 
 
 def writeXlsRows(award_data: dict) -> None:
@@ -405,7 +480,7 @@ def format_and_save(fileName: str, award_data: dict) -> str:
         + "." * 50 
         + '\n\n'
     )
-    with open(r""
+    with open(r"process_award_data\awards_output.txt", "a") as f:
         f.write(res)
     return res
 
@@ -591,6 +666,8 @@ def process_grp_award_data(pdf_fields: dict, grp_sn: int) -> dict:
     grp_award_data: dict = {
         "Award ID": "24-GRP-" + str(grp_sn).zfill(3),
     }
+    if str(pdf_fields["file_name"]).startswith("24-"):
+        grp_award_data["Award ID"] = pdf_fields["file_name"].split(" ")[0]
     shared_ind_grp_data: dict = get_shared_ind_grp_data(pdf_fields)
     grp_award_data.update(shared_ind_grp_data)
     grp_award_data["Category"] = "GRP"
@@ -600,7 +677,7 @@ def process_grp_award_data(pdf_fields: dict, grp_sn: int) -> dict:
     )
     value_and_extent: dict = get_value_and_extent(last_page_fields)
     if value_and_extent:
-        validate_award_amounts(nominees, value_and_extent, grp=True)
+        validate_award_amounts(nominees, value_and_extent, is_group=True)
         grp_award_data["Value"] = value_and_extent["Value"]["Text"]
         grp_award_data["Extent"] = value_and_extent["Extent"]["Text"]
     grp_award_data["Nominees"] = nominees
@@ -646,13 +723,15 @@ def process_ind_award_data(pdf_fields: dict, ind_sn: int) -> str:
     ind_award_data: dict = {
         "Award ID": "24-IND-" + str(ind_sn).zfill(3),
     }
+    if str(pdf_fields["file_name"]).startswith("24-"):
+        ind_award_data["Award ID"] = pdf_fields["file_name"].split(" ")[0]
     shared_ind_grp_data: dict = get_shared_ind_grp_data(pdf_fields)
     ind_award_data.update(shared_ind_grp_data)
     ind_award_data["Category"] = "IND"
     nominee_name_award_amounts: str = get_ind_name_amounts(first_page_fields)
     value_and_extent: dict = get_value_and_extent(last_page_fields)
     if value_and_extent:
-        validate_award_amounts(nominee_name_award_amounts, value_and_extent, ind=True)
+        validate_award_amounts(nominee_name_award_amounts, value_and_extent, is_individual=True)
         ind_award_data["Value"] = value_and_extent["Value"]["Text"]
         ind_award_data["Extent"] = value_and_extent["Extent"]["Text"]
     ind_award_data["Nominee"] = nominee_name_award_amounts["Name"]
@@ -663,7 +742,7 @@ def process_ind_award_data(pdf_fields: dict, ind_sn: int) -> str:
 
 
 def getSerialNums() -> dict[str:int]:
-    with open(AWARD_SER_NUMS, "r""
+    with open(AWARD_SER_NUMS, "r") as f:
         jsonSerNums: json[str:int] = json.load(f)
         serialNums: dict[str:int] = {
             "IND": jsonSerNums["IND"],
@@ -687,9 +766,7 @@ def processFiles() -> None:
         indID: int = serialNums["IND"]
         grpID: int = serialNums["GRP"]
         notProcessed: list[str] = []
-        folderPath: str = PROCESSING_FOLDER
-        if TESTING:
-            folderPath = TEST_FOLDER
+        folderPath: str = PROCESSING_FOLDER if not TESTING else TEST_FOLDER
         awardFiles: Path = Path(folderPath).rglob("*pdf")
         for awardFile in awardFiles:
             fileName: str = get_file_name(awardFile)
@@ -709,17 +786,18 @@ def processFiles() -> None:
                     print(formattedData)
                 if CREATE_XLS_ROWS:
                     writeXlsRows(awardData)
-                if INSERT_DATE:
-                    insertDateReceived(str(awardFile), awardData)
-                newFileName: str = createNewFileName(awardData)
-                if RENAME_AND_MOVE:
-                    newFilePath: str = renameAwardFile(awardFile, newFileName)
-                    move_file(newFilePath)
+                if not TESTING:
+                    if INSERT_DATE:
+                        insertDateReceived(str(awardFile), awardData)
+                    newFileName: str = createNewFileName(awardData)
+                    if RENAME_AND_MOVE:
+                        newFilePath: str = renameAwardFile(awardFile, newFileName)
+                        move_file(newFilePath)
 
             except Exception as e:
                 print(f"\n{lineBreak}\n{fileName}\nError: {e}\n")
                 notProcessed.append(fileName)
-        if UPDATE_AWARD_SER_NUMS:
+        if UPDATE_AWARD_SER_NUMS and not TESTING:
             updateSerialNums({"IND": indID, "GRP": grpID})
         if len(notProcessed) > 0:
             print(f"Not Processed ({len(notProcessed)}):")
@@ -727,7 +805,14 @@ def processFiles() -> None:
     except Exception as e:
         print(f"Error: {e}")
 
-
+def testProcessIND(file: str) -> None:
+    try:
+        fields = get_pdf_fields(file)
+        award = process_ind_award_data(pdf_fields=fields,ind_sn=1)
+        with open('blank.txt','w') as file:
+            pprint(award, stream=file)
+    except Exception as e:
+        print(e)
 # ----------------------------------------------------------------------------------------------------
 #
 # ----------------------------------------------------------------------------------------------------
@@ -740,6 +825,11 @@ if __name__ == "__main__":
     print()
     try:
         processFiles()
+        # file = r"X:\filepath.pdf"
+        # fields = get_pdf_fields(file)
+        # award = process_ind_award_data(pdf_fields=fields,ind_sn=1)
+        # with open('blank.txt','w') as file:
+        #     pprint(award, stream=file)
     except Exception as e:
         print(e)
     print()
