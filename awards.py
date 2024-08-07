@@ -1,10 +1,15 @@
+from typing import List, Optional, Dict, Union, Any
+from dataclasses import dataclass, field
+from collections import defaultdict
 from datetime import datetime
 from pprint import pprint
 from pathlib import Path
+from enum import Enum
 import shutil
 import fitz
 import json
 import os
+import re
 
 # ==================
 TESTING: bool = False
@@ -33,109 +38,102 @@ AWARD_SER_NUMS: str = (
 # ----------------------------------------------------------------------------------------------------
 
 
-def get_file_name(filePath: str) -> str:
-    return os.path.basename(filePath)
 
-MIN_PAGE_COUNT: int = 2
-MAX_PAGE_COUNT: int = 5
-FIRST_PAGE: int = 0
-def get_pdf_fields(pdf_file: str) -> dict:
+
+MIN_PAGE_COUNT = 2
+MAX_PAGE_COUNT = 5
+FIRST_PAGE = 0
+MIN_FIELD_COUNT = 10
+
+@dataclass
+class PDFFields:
+    first_page: Dict[str, Any] = field(default_factory=dict)
+    mid_pages: Dict[str, Any] = field(default_factory=dict)
+    last_page: Dict[str, Any] = field(default_factory=dict)
+    page_count: int = 0
+    file_name: str = ""
+    category: str = ""
+
+def get_pdf_fields(pdf_file: str) -> PDFFields:
+    """
+    Extracts PDF field data from the specified PDF file.
+    
+    Args:
+        pdf_file (str): The path to the PDF file.
+    
+    Returns:
+        PDFFields: An object containing the extracted PDF field data, including the first page, middle pages, and last page fields, as well as the total page count and file name.
+    
+    Raises:
+        ValueError: If the page count of the PDF file is not within the expected range (2-5 pages).
+        ValueError: If the number of extracted PDF fields is less than the minimum required (10).
+    """
+    pdf_fields = PDFFields(file_name=os.path.basename(pdf_file))
+    
     with fitz.open(pdf_file) as doc:
-        page_count: int = doc.page_count
-        last_page: int = page_count - 1
-        pdf_fields: dict = {
-            "first_page": {},
-            "mid_pages": {},
-            "last_page": {},
-            "page_count": page_count,
-            "file_name": os.path.basename(pdf_file)
-        }
-        if not (MIN_PAGE_COUNT <= page_count <= MAX_PAGE_COUNT):
-            raise Exception(
-                f"get_pdf_fields() error: \nPage Count: {page_count} (not in range {MIN_PAGE_COUNT}-{MAX_PAGE_COUNT})\n"
-            )
-        elif page_count == 2:
-            pdf_fields["category"] = "IND"
-        else:
-            pdf_fields["category"] = "GRP"
+        pdf_fields.page_count = doc.page_count
+        last_page = pdf_fields.page_count - 1
+
+        if not (MIN_PAGE_COUNT <= pdf_fields.page_count <= MAX_PAGE_COUNT):
+            raise ValueError(f"Page count {pdf_fields.page_count} not in range {MIN_PAGE_COUNT}-{MAX_PAGE_COUNT}")
+
+        pdf_fields.category = "IND" if pdf_fields.page_count == 2 else "GRP"
+
         for page in doc:
-            current_page: int = page.number
+            current_page = page.number
             for field in page.widgets():
-                key: str = field.field_name.strip().lower()
-                val: str = field.field_value.strip()
-                if all(
-                    [
-                        val == str(val),
-                        not str(val).isspace(),
-                        val != "",
-                        str(val).lower() != "off",
-                    ]
-                ):
+                key = field.field_name.strip().lower()
+                val = field.field_value.strip()
+                if val and val.lower() != "off" and not val.isspace():
                     if current_page == FIRST_PAGE:
-                        pdf_fields["first_page"][key] = val
+                        pdf_fields.first_page[key] = val
                     elif current_page == last_page:
-                        pdf_fields["last_page"][key] = val
+                        pdf_fields.last_page[key] = val
                     elif FIRST_PAGE < current_page < last_page:
-                        pdf_fields["mid_pages"][key] = val
+                        pdf_fields.mid_pages[key] = val
 
-    def count_fields(fields: dict) -> int:
-        if not isinstance(fields, dict):
-            return 1
-        count = 0
-        for field in fields.values():
-            count += count_fields(field)
-        return count
+    field_count = sum(len(getattr(pdf_fields, attr)) for attr in ['first_page', 'mid_pages', 'last_page'])
+    if field_count < MIN_FIELD_COUNT:
+        raise ValueError(f"Insufficient number of PDF fields. Field count: {field_count}")
 
-    field_count = count_fields(pdf_fields)
-    if field_count < 10:
-        combined_items = (
-            "\n\t".join(f"{k}: {str(v)}" for k, v in pdf_fields.items())
-            if pdf_fields
-            else None
-        )
-        field_err_0 = "get_pdf_fields() error:"
-        field_err_1 = "Insufficient number of PDF fields."
-        field_err_2 = f"Field Count: {field_count}"
-        field_err_3 = f"Fields:\n\t{combined_items}"
-        field_err_msg = "\n".join([field_err_0, field_err_1, field_err_2, field_err_3])
-        raise Exception(field_err_msg + "\n")
     return pdf_fields
 
-
 def xjustification(field_text: str) -> str:
-    field_text: str = (
+    cleaned_text = (
         field_text.strip()
-        .encode("utf-8", errors="ignore")
-        .decode("ascii", errors="ignore")
+        .encode("ascii", errors="ignore")
+        .decode("ascii")
         .replace('"', "'")
     )
-    return '"' + field_text + '"'
+    return f'"{cleaned_text}"'
 
+def remove_nicknames(name_parts: List[str]) -> List[str]:
+    return [part for part in name_parts if not re.match(r'^\(.*\)$|^".*"$', part)]
+
+def format_two_part_name(name_parts: List[str]) -> str:
+    if "," in name_parts[0]:
+        return " ".join(name_parts).title()
+    elif "." not in " ".join(name_parts):
+        return f"{name_parts[1]}, {name_parts[0]}".title()
+    return " ".join(name_parts).title()
+
+def format_three_part_name(name_parts: List[str]) -> str:
+    if "," not in name_parts[0] and 1 <= len(name_parts[1]) < 3:
+        return f"{name_parts[2]}, {name_parts[0]}".title()
+    return " ".join(name_parts).title()
 
 def xname(field_text: str) -> str:
-    last_first: str = ""
-    if " " in field_text:
-        split_name = field_text.split()
-        for i in split_name:
-            if "(" in i and ")" in i or (i[0] == '"' == i[-1]):
-                split_name.remove(i)  # i == 'NickName' or (NickName)
-        if len(split_name) == 2:
-            if "," in split_name[0]:  # [0,1] = Last, First
-                last_first = field_text
-            elif (
-                "." not in field_text
-            ):  # [0,1] = First Last  -  not F. Last  -  not First L.
-                last_first = ", ".join([split_name[1], split_name[0]])
-        elif all(
-            [
-                len(split_name) == 3,
-                "," not in split_name[0],
-                1 <= len(split_name[1]) < 3,
-            ]
-        ):  # [0,1,2] = First M. Last  -  not F. M. Last  -  not First Middle Last
-            last_first = ", ".join([split_name[2], split_name[0]])
-    return last_first.title() if last_first else field_text
+    if not field_text or " " not in field_text:
+        return field_text
 
+    name_parts: List[str] = remove_nicknames(field_text.split())
+
+    if len(name_parts) == 2:
+        return format_two_part_name(name_parts)
+    elif len(name_parts) == 3:
+        return format_three_part_name(name_parts)
+    
+    return field_text.title()
 
 def xnumerical(field_text: str) -> int:
     if "." in field_text:
@@ -143,17 +141,15 @@ def xnumerical(field_text: str) -> int:
     digits: int = int("".join(i for i in field_text if str(i).isdigit()))
     return digits
 
-
 def get_nominator_name(first_page_fields: dict[str, str | int]) -> str:
     for field_name, field_text in first_page_fields.items():
         if field_name in ["please print", "nominators name"]:
             return xname(field_text)
     return ""
 
-
 def get_funding_org(
-    first_page_fields: dict[str, str | int], grp=False, ind=False
-) -> str:
+    first_page_fields: dict[str, str | int], grp: bool = False, ind: bool = False
+) -> Optional[str]:
 
     def collect_list_of_divs(first_page_fields: dict) -> list | None:
         divisions_fields: list = []
@@ -168,8 +164,8 @@ def get_funding_org(
                 divisions_fields.append(str(field_text).upper())
         return divisions_fields if divisions_fields else None
 
-    def define_funding_org(divisions_fields: list) -> str | list | None:
-        if None == divisions_fields:
+    def define_funding_org(divisions_fields: Optional[list[str]]) -> Optional[str]:
+        if divisions_fields is None:
             return None
         org_ZJR: list[str] = ['div_EPB', 'div_OAQ', 'div_LCK', 'div_SKG', 'div_PAK', 'div_HCV', 'div_JDU', 'div_HUA', 'div_KNA', 'div_ISV']
         org_QTB: list[str] = ['div_MOS', 'div_HGD', 'div_FMB', 'div_LIY', 'div_OMO', 'div_QKQ', 'div_QEK', 'div_ISR', 'div_VTB', 'div_BIP']
@@ -240,77 +236,75 @@ def get_justification(last_page: dict[str, str]) -> str:
         if "extent" in field_name:
             return xjustification(field_text)
 
+@dataclass
+class AwardCategory:
+    text: str
+    index: int
 
-VALUE_CHOICES: list = ["moderate", "high", "exceptional"]
-EXTENT_CHOICES: list = ["limited", "extended", "general"]
+@dataclass
+class AwardInfo:
+    value: AwardCategory
+    extent: AwardCategory
 
-def get_value_and_extent(last_page: dict[str, str]) -> dict:
+def find_direct_matches(first_page: Dict[str, str]) -> Optional[AwardInfo]:
+    value = next((AwardCategory(field_name.capitalize(), VALUE_CHOICES.index(field_name)) 
+                    for field_name in first_page if field_name in VALUE_CHOICES), None)
+    extent = next((AwardCategory(field_name.capitalize(), EXTENT_CHOICES.index(field_name)) 
+                    for field_name in first_page if field_name in EXTENT_CHOICES), None)
+
+    if value and extent:
+        return AwardInfo(value, extent)
+    return None
+
+def process_matches(sentence: str, match: tuple) -> Optional[AwardInfo]:
+    value, extent = match
+    highlighted_sentence = sentence.replace(value, f"<--{value.upper()}-->").replace(extent, f"<--{extent.upper()}-->")
+    
+    print(f"Value and Extent Detected:\n{value}, {extent}\n")
+    print(f"Sentence:\n>>> {highlighted_sentence}\n")
+    print("Enter 1 to verify.")
+    
+    if input(">>> ") == "1":
+        return AwardInfo(
+            AwardCategory(value.capitalize(), VALUE_CHOICES.index(value)),
+            AwardCategory(extent.capitalize(), EXTENT_CHOICES.index(extent))
+        )
+    return None
+
+def search_text_for_matches(first_page: Dict[str, str]) -> Optional[AwardInfo]:
+    for field_name, field_text in first_page.items():
+        if "extent" in field_name:
+            words = field_text.split()
+            for i in range(0, len(words), 8):
+                sentence = " ".join(words[max(0, i-36):i])
+                matches = [
+                    (v, e)
+                    for v in VALUE_CHOICES
+                    for e in EXTENT_CHOICES
+                    if v in sentence and e in sentence
+                ]
+                if matches:
+                    return process_matches(sentence, matches[0])
+    return None
+
+VALUE_CHOICES: List[str] = ["moderate", "high", "exceptional"]
+EXTENT_CHOICES: List[str] = ["limited", "extended", "general"]
+
+def extract_award_info(pdf_fields: PDFFields) -> Optional[AwardInfo]:
     """
-    Extracts value and extent information from the last page.
+    Extracts value and extent information from the first page.
 
     Args:
-    last_page (dict[str, str]): A dictionary containing the last page data.
+    pdf_fields (PDFFields): A PDFFields object containing the PDF data.
 
     Returns:
-    dict: A dictionary containing the extracted value and extent information.
+    Optional[AwardInfo]: An AwardInfo object containing the extracted value and extent information, or None if not found.
     """
-    value_extent_dict: dict = {}
-    items = list(last_page.items())
+    award_info = find_direct_matches(pdf_fields.first_page)
+    if award_info:
+        return award_info
 
-    # Check if value or extent is directly present in the last page
-    for field_name, field_text in items:
-        if field_name in VALUE_CHOICES:
-            value_extent_dict["Value"] = {
-                "Text": field_name.capitalize(),
-                "Index": VALUE_CHOICES.index(field_name),
-            }
-        elif field_name in EXTENT_CHOICES:
-            value_extent_dict["Extent"] = {
-                "Text": field_name.capitalize(),
-                "Index": EXTENT_CHOICES.index(field_name),
-            }
-
-    # If not found, search in the text
-    if not value_extent_dict:
-        for field_name, field_text in items:
-            if "extent" in field_name:
-                award_justification_text: list = field_text.split(" ")
-                for i in range(0, len(award_justification_text), 8):
-                    n = 0 if i < 36 else i - 36
-                    sentence: str = " ".join(award_justification_text[n:i])
-                    val_ext_detected: list = [
-                        [v, e]
-                        for v in VALUE_CHOICES
-                        for e in EXTENT_CHOICES
-                        if v in sentence and e in sentence
-                    ]
-                    if val_ext_detected:
-                        val_ext_found: list[str] = val_ext_detected
-                        for text in val_ext_found:
-                            sentence = sentence.replace(
-                                text, "<--" + text.upper() + "-->"
-                            )
-                        print("Value and Extent Detected:\n")
-                        print(*val_ext_detected, "\n")
-                        print("Sentence:\n>>> ", sentence, "\n")
-                        print("Enter 1 to verify.")
-                        sentence_verification: str = input(">>> ")
-                        if sentence_verification == "":
-                            return None
-                        elif sentence_verification == str(1):
-                            value_extent_dict["Value"] = {
-                                "Text": val_ext_found.capitalize(),
-                                "Index": VALUE_CHOICES.index(val_ext_found),
-                            }
-                            value_extent_dict["Extent"] = {
-                                "Text": val_ext_found.capitalize(),
-                                "Index": EXTENT_CHOICES.index(val_ext_found),
-                            }
-                            return value_extent_dict
-    return value_extent_dict
-
-
-from typing import List, Dict, Union
+    return search_text_for_matches(pdf_fields.first_page)
 
 MONETARY_LIMITS = [
     [500, 1000, 3000],  # moderate
@@ -324,58 +318,77 @@ TIME_LIMITS = [
     [27, 36, 40],  # exceptional
 ]  # limited    extended    general
 
+class AwardCategory(Enum):
+    VALUE = "Value"
+    EXTENT = "Extent"
+
+@dataclass
+class AwardInfo:
+    value: str
+    value_index: int
+    extent: str
+    extent_index: int
+
 def validate_award_amounts(
-    nominees: list[dict],
-    val_and_ext_vals: dict,
+    nominees: List[dict] | dict,
+    award_info: AwardInfo,
     is_group: bool = False,
     is_individual: bool = False
 ) -> None:
-    value_index: int = val_and_ext_vals["Value"]["Index"]
-    extent_index: int = val_and_ext_vals["Extent"]["Index"]
-    max_monetary: int = MONETARY_LIMITS[value_index][extent_index]
-    max_hours: int = TIME_LIMITS[value_index][extent_index]
+    try:
+        max_monetary: int = MONETARY_LIMITS[award_info.value_index][award_info.extent_index]
+        max_hours: int = TIME_LIMITS[award_info.value_index][award_info.extent_index]
+    except IndexError:
+        raise ValueError("Invalid award value or extent index")
 
-    def check_award_limits(name: str, monetary_award: int, time_award: int) -> Union[str, None]:
+    def check_award_limits(name: str, monetary_award: int, time_award: int) -> Optional[str]:
         monetary_percentage: float = monetary_award / max_monetary
         time_percentage: float = time_award / max_hours
         total_percentage = monetary_percentage + time_percentage
         if total_percentage > 1:
-            return (
-                f"Nominee:  {name}\n"
-                f"Monetary: ${monetary_award} (Max: ${max_monetary})\n"
-                f"Time:     {time_award} hours (Max: {max_hours} hours)\n"
-                f"Combined: {total_percentage:.2%} (Max: 100%)"
-            )
+            return f"""
+Nominee:  {name}
+Monetary: ${monetary_award} (Max: ${max_monetary})
+Time:     {time_award} hours (Max: {max_hours} hours)
+Combined: {total_percentage:.2%} (Max: 100%)
+"""
         return None
 
     if is_group:
-        invalid_nominations: List[str] = []
-        for nominee in nominees:
-            result = check_award_limits(nominee["Name"], nominee["Monetary"], nominee["Hours"])
-            if result:
-                invalid_nominations.append(result)
+        invalid_nominations: List[str] = [
+            result for nominee in nominees
+            if (result := check_award_limits(nominee["Name"], nominee["Monetary"], nominee["Hours"]))
+        ]
         
         if invalid_nominations:
-            error_message = (
-                f"Error:\n"
-                f"Award amounts exceed the maximum allowed based on the selected award value and extent.\n"
-                f"Value:  {val_and_ext_vals['Value']['Text']}\n"
-                f"Extent: {val_and_ext_vals['Extent']['Text']}\n"
-                f"Nominees:\n\n\t" + "\n\n\t".join(invalid_nominations)
-            )
+            error_message = f"""
+Error:
+Award amounts exceed the maximum allowed based on the selected award value and extent.
+Value:  {award_info.value}
+Extent: {award_info.extent}
+Nominees:
+
+\t{"\n\n\t".join(invalid_nominations)}
+"""
             raise ValueError(error_message)
 
     elif is_individual:
         result = check_award_limits(nominees["Name"], nominees["Monetary"], nominees["Hours"])
         if result:
-            error_message = (
-                f"Error:\n"
-                f"Award amounts exceed the maximum allowed based on the selected award value and extent.\n"
-                f"Value:    {val_and_ext_vals['Value']['Text']}\n"
-                f"Extent:   {val_and_ext_vals['Extent']['Text']}\n"
-                f"{result}"
-            )
+            error_message = f"""
+Error:
+Award amounts exceed the maximum allowed based on the selected award value and extent.
+Value:    {award_info.value}
+Extent:   {award_info.extent}
+{result}
+"""
             raise ValueError(error_message)
+
+
+
+
+
+
 
 def get_shared_ind_grp_data(pdf_fields: dict[str, int | dict[str, str]]) -> dict:
     first_page_fields: dict = pdf_fields["first_page"]
