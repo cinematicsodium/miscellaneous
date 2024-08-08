@@ -4,109 +4,189 @@ headers: list[str] = ['STATUS', 'HR SPEC.', 'LOG ID', 'DATE RECEIVED', 'DATE PRO
 
 create an Excel dashboard schema based on the given list of headers.
 
+....................................................................................................
+
 STATUS
+
 =IFS(
-    [@[DATE RECEIVED]] = "",
-    "",
-    [@[DATE PROCESSED]] = "Cancelled",
-    "Cancelled",
-    [@[DUE DATE (RCVD + 14d.)]] < [@[DATE PROCESSED]],
-    "Closed, Past Due",
+    [@[DATE RECEIVED]] = "", "",
+    [@[DATE PROCESSED]] = "Cancelled", "Cancelled",
     [@[DATE PROCESSED]] <> "",
-    "Closed",
-    [@[DUE DATE (RCVD + 14d.)]] < TODAY(),
-    "Past Due",
-    [@[DUE DATE (RCVD + 14d.)]] - TODAY() <= 7,
-    "Due Soon",
-    [@[DATE RECEIVED]] <> "",
-    "Open"
+        IF(
+            [@[DUE DATE (RCVD + 14d.)]] < [@[DATE PROCESSED]],
+            "Closed, Past Due",
+            "Closed"
+        ),
+    [@[DUE DATE (RCVD + 14d.)]] < TODAY(), "Past Due",
+    [@[DUE DATE (RCVD + 14d.)]] - TODAY() <= 7, "Due Soon",
+    TRUE, "Open"
 )
 
+....................................................................................................
+
 HR SPEC
-    =IF(
-        OR(
-            [@[EMPLOYEE NAME]] = "",
-            [@[FUNDING ORG]] = ""
-        ),
-        "",
-        XLOOKUP(
-            [@[FUNDING ORG]],
-            org_con[ORGANIZATION],
-            XLOOKUP(
-                org_con[CONSULTANT ID],
-                con_ID[CONSULTANT ID],
-                con_ID[CONSULTANT NAME],
-                "UNKN"
-            ),
-            ""
-        )
+
+=IF(
+    OR(
+        [@[EMPLOYEE NAME]] = "",
+        [@[FUNDING ORG]] = ""
+    ),
+    "",
+    LET(
+        organization, [@[FUNDING ORG]],
+        consultantID, XLOOKUP(organization, org_con[ORGANIZATION], org_con[CONSULTANT ID], ""),
+        HR_Specialist, XLOOKUP(consultantID, con_ID[CONSULTANT ID], con_ID[CONSULTANT NAME], "UNKN"),
+        HR_Specialist
     )
+)
+
+....................................................................................................
 
 NUM. DAYS OPEN
-    =IFERROR(
-        IFS(
-            [@[DATE RECEIVED]] = "",
-            "",
-            [@[DATE PROCESSED]] <> "",
-            [@STATUS],
-            [@[DATE RECEIVED]] <> "",
-            TODAY(
-    
-            ) - [@[DATE RECEIVED]]
-        ),
-        ""
-    )
+
+=IFERROR(
+    IFS(
+        [@[DATE RECEIVED]] = "", "",
+        [@[DATE PROCESSED]] <> "", [@STATUS],
+        [@[DATE RECEIVED]] <> "", TODAY() - [@[DATE RECEIVED]]
+    ),
+    ""
+)
+
+....................................................................................................
 
 NUM. DAYS TO PROCESS
-    =IFERROR(
-        IF(
-            [@[DATE PROCESSED]] = "",
-            "",
-             [@[DATE PROCESSED]] - [@[DATE RECEIVED]]
-        ),
-        ""
-    )
+
+=IFERROR(
+    IF(
+        [@[DATE PROCESSED]] = "",
+        "",
+        [@[DATE PROCESSED]] - [@[DATE RECEIVED]]
+    ),
+    ""
+)
+....................................................................................................
 
 FILE NAME
-    =IFERROR(
-         IFS(
-            [@[LOG ID]] = "",
-            "",
-             [@[IND/GRP]] = "GRP",
-            TEXTJOIN(
-                " - ",
-                TRUE,
-                [@[LOG ID]],
-                IF(
-                    [@[NA-MB FUNDING]] <> "",
-                    "NA-" & [@[NA-MB FUNDING]],
-                    [@[FUNDING ORG]]
-                ),
-                COUNTIF(
-                    [LOG ID],
-                    [@[LOG ID]]
-                ) & " nominations",
-                TEXT(
-                    [@[DATE RECEIVED]],
-                    "YYYY-MM-DD"
-                )
-            ),
-             [@[IND/GRP]] = "IND",
-            TEXTJOIN(
-                " - ",
-                TRUE,
-                [@[LOG ID]],
-                IF(
-                    [@[NA-MB FUNDING]] <> "",
-                    "NA-" & [@[NA-MB FUNDING]],
-                    [@[FUNDING ORG]]
-                ),
-                [@[EMPLOYEE NAME]],
-                TEXT(
-                    [@[DATE RECEIVED]],
-                    "YYYY-MM-DD"
-                )
-            )
-        ),
-        ""
-    )
+
+=IFERROR(
+    LET(
+        logID, [@[LOG ID]],
+        naMB, [@[NA-MB FUNDING]],
+        fundingOrg, [@[FUNDING ORG]],
+        empName, [@[EMPLOYEE NAME]],
+        dateReceived, TEXT([@[DATE RECEIVED]], "YYYY-MM-DD"),
+        countNominations, COUNTIF([LOG ID], logID),
+        fundingInfo, IF(naMB <> "", "NA-" & naMB, fundingOrg),
+        grpFileName, TEXTJOIN(" - ", TRUE, logID, fundingInfo, countNominations & " nominations", dateReceived),
+        indFileName, TEXTJOIN(" - ", TRUE, logID, fundingInfo, empName, dateReceived),
+        IFS(
+            logID = "", "",
+            [@[IND/GRP]] = "GRP", grpFileName,
+            [@[IND/GRP]] = "IND", indFileName
+        )
+    ),
+    ""
+)
+
+....................................................................................................
+
+### Potential Data Analysis Figures for Excel Dashboard
+
+1. **Status Analysis**
+    - Count of each status type.
+    - Percentage distribution of each status.
+
+2. **HR Specialist Analysis**
+    - Number of records handled by each HR Specialist.
+    - Average processing time by HR Specialist.
+
+3. **Log ID**
+    - Unique log entries.
+    - Trend analysis based on log entries over time.
+
+4. **Date Received/Date Processed**
+    - Time trend of received vs. processed dates.
+    - Average time to process (Date Processed - Date Received).
+    - Distribution of received and processed dates.
+
+5. **Employee Name**
+    - Number of records per employee.
+    - Aggregated figures for employees involved in multiple records.
+
+6. **Individual/Group (IND/GRP)**
+    - Count and percentage of individual vs. group records.
+    - Comparative analysis of processing times for individual vs. group records.
+
+7. **SAS/OTS**
+    - Distribution of SAS vs. OTS.
+    - Comparative analysis of processing times for SAS vs. OTS.
+
+8. **Monetary**
+    - Total monetary value.
+    - Average monetary value per record.
+    - Distribution of monetary values.
+
+9. **Hours**
+    - Total hours.
+    - Average hours per record.
+    - Distribution of hours.
+
+10. **Nominator Name**
+    - Number of nominations per nominator.
+    - Comparative analysis of awards given by different nominators.
+
+11. **Funding Organization (FUNDING ORG)**
+    - Number of records per funding organization.
+    - Total and average funding per organization.
+
+12. **NA-MB Funding**
+    - Total NA-MB funding.
+    - Average NA-MB funding per record.
+    - Distribution of NA-MB funding values.
+
+13. **Award Justification**
+    - Text analysis to identify common themes.
+    - Length analysis of justifications.
+
+14. **Prior Awards in the Past 12 Months**
+    - Count of prior awards per employee.
+    - Analysis of trends in awarding the same employees.
+
+15. **Due Date (RCVD + 14d)**
+    - Percentage of records meeting the due date.
+    - Analysis of records exceeding the due date.
+
+16. **# Days Open**
+    - Average number of days records remain open.
+    - Distribution of days open.
+
+17. **# Days to Process**
+    - Average number of days to process records.
+    - Distribution of processing times.
+
+18. **File Name**
+    - Unique file names.
+    - Count of records associated with each file name.
+
+### Additional Data Analysis Figures
+
+1. **Processing Efficiency**
+    - Ratio of records processed within the due date vs. total records.
+    - Trend analysis of processing efficiency over time.
+
+2. **Employee Involvement**
+    - Analysis of employees with multiple records and their average processing times.
+    - Correlation between employee involvement and processing times.
+
+3. **Funding Efficiency**
+    - Comparison of monetary vs. NA-MB funding in terms of total, average, and distribution.
+    - Analysis of funding efficiency by different organizations.
+
+4. **Award Justification Analysis**
+    - Sentiment analysis of award justifications.
+    - Keyword frequency analysis to identify common reasons for awards.
+
+5. **Time Trend Analysis**
+    - Seasonal trends in the number of records received and processed.
+    - Monthly or quarterly analysis of key metrics.
