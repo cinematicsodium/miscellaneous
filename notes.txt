@@ -190,3 +190,43 @@ FILE NAME
 5. **Time Trend Analysis**
     - Seasonal trends in the number of records received and processed.
     - Monthly or quarterly analysis of key metrics.
+
+....................................................................................................
+
+X-axis (columns): "Open", "Due Soon", "Closed", "Past Due"
+
+Y-axis (rows): "Past 7 Days", "Past 14 Days", "Past 30 Days"
+
+PAST 7 DAYS:
+- Open: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-7, award_data[STATUS], "Open")
+- Due Soon: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-7, award_data[STATUS], "Due Soon")
+- Closed: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-7, award_data[STATUS], "Closed")
+- Past Due: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-7, award_data[STATUS], "Past Due")
+- Total: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-7)
+
+PAST 14 DAYS:
+- Open: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-14, award_data[STATUS], "Open")
+- Due Soon: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-14, award_data[STATUS], "Due Soon")
+- Closed: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-14, award_data[STATUS], "Closed")
+- Past Due: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-14, award_data[STATUS], "Past Due")
+- Total: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-14)
+
+PAST 30 DAYS:
+- Open: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-30, award_data[STATUS], "Open")
+- Due Soon: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-30, award_data[STATUS], "Due Soon")
+- Closed: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-30, award_data[STATUS], "Closed")
+- Past Due: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-30, award_data[STATUS], "Past Due")
+- Total: =COUNTIFS(award_data[DATE RECEIVED], ">=" & TODAY()-30)
+
+
+....................................................................................................
+
+# PAST X-DAYS BY HR SPEC.
+
+X-axis (columns): "Alice", "Benjamin", "Catherine", "David", "Emily"
+
+....................................................................................................
+
+
+
+....................................................................................................
