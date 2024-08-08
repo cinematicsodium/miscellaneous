@@ -1,1 +1,5 @@
+Analyze the following list of table headers.
 
+headers: list[str] = ['STATUS', 'HR SPEC.', 'LOG ID', 'DATE RECEIVED', 'DATE PROCESSED', 'EMPLOYEE NAME', 'IND/GRP', 'SAS/OTS', 'MONETARY', 'HOURS', 'NOMINATOR NAME', 'FUNDING ORG', 'NA-MB FUNDING', 'AWARD JUSTIFICATION', 'PRIOR AWARDS IN THE PAST 12 MOS.', '"DUE DATE (RCVD + 14d.)"', '# DAYS OPEN', '# DAYS TO PROCESS', 'FILE NAME']
+
+create an Excel dashboard schema based on the given list of headers.
