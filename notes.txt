@@ -3,3 +3,110 @@ Analyze the following list of table headers.
 headers: list[str] = ['STATUS', 'HR SPEC.', 'LOG ID', 'DATE RECEIVED', 'DATE PROCESSED', 'EMPLOYEE NAME', 'IND/GRP', 'SAS/OTS', 'MONETARY', 'HOURS', 'NOMINATOR NAME', 'FUNDING ORG', 'NA-MB FUNDING', 'AWARD JUSTIFICATION', 'PRIOR AWARDS IN THE PAST 12 MOS.', '"DUE DATE (RCVD + 14d.)"', '# DAYS OPEN', '# DAYS TO PROCESS', 'FILE NAME']
 
 create an Excel dashboard schema based on the given list of headers.
+
+STATUS
+=IFS(
+    [@[DATE RECEIVED]] = "",
+    "",
+    [@[DATE PROCESSED]] = "Cancelled",
+    "Cancelled",
+    [@[DUE DATE (RCVD + 14d.)]] < [@[DATE PROCESSED]],
+    "Closed, Past Due",
+    [@[DATE PROCESSED]] <> "",
+    "Closed",
+    [@[DUE DATE (RCVD + 14d.)]] < TODAY(),
+    "Past Due",
+    [@[DUE DATE (RCVD + 14d.)]] - TODAY() <= 7,
+    "Due Soon",
+    [@[DATE RECEIVED]] <> "",
+    "Open"
+)
+
+HR SPEC
+    =IF(
+        OR(
+            [@[EMPLOYEE NAME]] = "",
+            [@[FUNDING ORG]] = ""
+        ),
+        "",
+        XLOOKUP(
+            [@[FUNDING ORG]],
+            org_con[ORGANIZATION],
+            XLOOKUP(
+                org_con[CONSULTANT ID],
+                con_ID[CONSULTANT ID],
+                con_ID[CONSULTANT NAME],
+                "UNKN"
+            ),
+            ""
+        )
+    )
+
+NUM. DAYS OPEN
+    =IFERROR(
+        IFS(
+            [@[DATE RECEIVED]] = "",
+            "",
+            [@[DATE PROCESSED]] <> "",
+            [@STATUS],
+            [@[DATE RECEIVED]] <> "",
+            TODAY(
+    
+            ) - [@[DATE RECEIVED]]
+        ),
+        ""
+    )
+
+NUM. DAYS TO PROCESS
+    =IFERROR(
+        IF(
+            [@[DATE PROCESSED]] = "",
+            "",
+             [@[DATE PROCESSED]] - [@[DATE RECEIVED]]
+        ),
+        ""
+    )
+
+FILE NAME
+    =IFERROR(
+         IFS(
+            [@[LOG ID]] = "",
+            "",
+             [@[IND/GRP]] = "GRP",
+            TEXTJOIN(
+                " - ",
+                TRUE,
+                [@[LOG ID]],
+                IF(
+                    [@[NA-MB FUNDING]] <> "",
+                    "NA-" & [@[NA-MB FUNDING]],
+                    [@[FUNDING ORG]]
+                ),
+                COUNTIF(
+                    [LOG ID],
+                    [@[LOG ID]]
+                ) & " nominations",
+                TEXT(
+                    [@[DATE RECEIVED]],
+                    "YYYY-MM-DD"
+                )
+            ),
+             [@[IND/GRP]] = "IND",
+            TEXTJOIN(
+                " - ",
+                TRUE,
+                [@[LOG ID]],
+                IF(
+                    [@[NA-MB FUNDING]] <> "",
+                    "NA-" & [@[NA-MB FUNDING]],
+                    [@[FUNDING ORG]]
+                ),
+                [@[EMPLOYEE NAME]],
+                TEXT(
+                    [@[DATE RECEIVED]],
+                    "YYYY-MM-DD"
+                )
+            )
+        ),
+        ""
+    )
