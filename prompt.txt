@@ -1,13 +1,9 @@
 1. Analyze the following text and context: {
     text: {
-        """
-        
-        """
+        #
     },
     context: {
-        """
-
-        """
+        #
     }
 }
 
