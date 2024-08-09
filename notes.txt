@@ -227,6 +227,43 @@ X-axis (columns): "Alice", "Benjamin", "Catherine", "David", "Emily"
 
 ....................................................................................................
 
+import os
+import pandas as pd
+
+def extract_noac_data_to_csv(directory_path: str, output_csv: str):
+    """
+    Extracts data from the 'NOAC' column in all `.xlsm` files within a specified directory 
+    and appends it to a CSV file. The function ensures that the CSV file is either created 
+    or updated without duplicating headers.
+
+    Parameters:
+    directory_path (str): The path to the directory containing the `.xlsm` files.
+    output_csv (str): The name of the output CSV file to store the extracted data.
+
+    Returns:
+    None
+    """
+    # Check if the output CSV file exists
+    file_exists = os.path.isfile(output_csv)
+    
+    for file_name in os.listdir(directory_path):
+        if file_name.endswith('.xlsm'):
+            file_path = os.path.join(directory_path, file_name)
+            try:
+                # Attempt to read the .xlsm file using pandas
+                df = pd.read_excel(file_path, engine='openpyxl')
+                
+                # Check if the 'NOAC' column exists in the file
+                if 'NOAC' in df.columns:
+                    # If the CSV file already exists, append without header
+                    df[['NOAC']].to_csv(output_csv, mode='a', index=False, header=not file_exists)
+                    file_exists = True
+                else:
+                    print(f"Warning: 'NOAC' column not found in {file_name}. Skipping file.")
+            
+            except Exception as e:
+                print(f"Error processing {file_name}: {e}. Skipping file.")
+
 
 
 ....................................................................................................
