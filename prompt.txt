@@ -1,0 +1,20 @@
+1. Analyze the following text and context: {
+    text: {
+        """
+        
+        """
+    },
+    context: {
+        """
+
+        """
+    }
+}
+
+2. Rewrite the text for clarity and effectiveness. Do not provide any output at this point.
+
+3. Identify potential improvements or additions. Do not provide any output at this point.
+
+4. Refine the text based on identified improvements. Do not provide any output at this point.
+
+5. Finally, present the final optimized text.
